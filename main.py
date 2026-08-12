@@ -1,16 +1,53 @@
-# This is a sample Python script.
+from typing import TypedDict, Annotated
 
-# Press Ctrl+F5 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from langchain_core.messages import AnyMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+from dotenv import load_dotenv
+
+from agent.tools import {
+    get_n_random_words,
+}
+
+load_dotenv()
+
+class AgentState(TypedDict):
+    message: Annotated[list[AnyMessage], add_messages]
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
+local_tools = [
+    get_n_random_words,
+]
+
+CLANKI_JS = "/Users/Jodie.Burchell/Documents/git/clanki/build/index.js"
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+async def setup_tools():
+    client = MultiServerMCPClient(
+        {
+            "clanki": {
+                "command":"node",
+                "args": [CLANKI_JS],
+                "transport": "stdio",
+            }
+        }
+    )
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+def assistant(state: AgentState):
+    sys_msg = SystemMessage(content=f"""
+    You are a helpful language learning assistant. 
+    
+    The user is going to give you a command.
+    """)
+
+    tools = assistant.tools if hasattr(assistant, "tools") else []
+    llm = ChatOpenAI(model="gpt-4o")
+    llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)
+
+    return {
+        "messages": [llm_with_tools.invoke([sys_msg] + state["messages"])]
+
+    }
