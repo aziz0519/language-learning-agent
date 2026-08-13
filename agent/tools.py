@@ -22,3 +22,16 @@ def get_n_random_words(language: str, n: int) -> list:
     with open(path) as f:
         word_list = json.load(f)
 
+    random_word_dict = {k: word_list[k] for k in random.sample(list(word_list.keys()), n)}
+    random_words = [item["word"] for item in random_word_dict.values()]
+
+    return random_words
+
+@tool
+def get_n_random_words_by_difficulty_level(language: str, n: int) -> list:
+    pass
+
+@tool
+def translate_words(random_words: list, source_language: str, target_language: str) -> dict:
+    pass
+

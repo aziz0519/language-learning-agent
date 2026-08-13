@@ -8,21 +8,21 @@ from langchain_mcp_adapters.client import MultiServerMCPClient
 
 from dotenv import load_dotenv
 
-from agent.tools import {
-    get_n_random_words,
-}
+from agent.tools import get_n_random_words, get_n_random_words_by_difficulty_level, translate_words
+
+
 
 load_dotenv()
 
 class AgentState(TypedDict):
-    message: Annotated[list[AnyMessage], add_messages]
+    messages: Annotated[list[AnyMessage], add_messages]
 
 
 local_tools = [
     get_n_random_words,
+    get_n_random_words_by_difficulty_level,
+    translate_words
 ]
-
-CLANKI_JS = "/Users/Jodie.Burchell/Documents/git/clanki/build/index.js"
 
 
 async def setup_tools():
@@ -30,17 +30,24 @@ async def setup_tools():
         {
             "clanki": {
                 "command":"node",
-                "args": [CLANKI_JS],
+                "args": [],
                 "transport": "stdio",
             }
         }
     )
+    mcp_tools = await client.get_tools()
+    return [*local_tools, *mcp_tools]
 
 def assistant(state: AgentState):
     sys_msg = SystemMessage(content=f"""
-    You are a helpful language learning assistant. 
+    You are a helpful language learning assistant. You can carry out actions using the following tools: 
     
     The user is going to give you a command.
+    
+    Your job is to check:
+    1. Which source language that the user wants words from.
+    2. How many word they want.
+    3. Whether they want
     """)
 
     tools = assistant.tools if hasattr(assistant, "tools") else []
