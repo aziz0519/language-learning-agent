@@ -1,16 +1,60 @@
-# This is a sample Python script.
+from typing import TypedDict, Annotated
 
-# Press Ctrl+F5 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from langchain_core.messages import AnyMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+from dotenv import load_dotenv
+
+from agent.tools import get_n_random_words, get_n_random_words_by_difficulty_level, translate_words
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press F9 to toggle the breakpoint.
+
+load_dotenv()
+
+class AgentState(TypedDict):
+    messages: Annotated[list[AnyMessage], add_messages]
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+local_tools = [
+    get_n_random_words,
+    get_n_random_words_by_difficulty_level,
+    translate_words
+]
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+async def setup_tools():
+    client = MultiServerMCPClient(
+        {
+            "clanki": {
+                "command":"node",
+                "args": [],
+                "transport": "stdio",
+            }
+        }
+    )
+    mcp_tools = await client.get_tools()
+    return [*local_tools, *mcp_tools]
+
+def assistant(state: AgentState):
+    sys_msg = SystemMessage(content=f"""
+    You are a helpful language learning assistant. You can carry out actions using the following tools: 
+    
+    The user is going to give you a command.
+    
+    Your job is to check:
+    1. Which source language that the user wants words from.
+    2. How many word they want.
+    3. Whether they want
+    """)
+
+    tools = assistant.tools if hasattr(assistant, "tools") else []
+    llm = ChatOpenAI(model="gpt-4o")
+    llm_with_tools = llm.bind_tools(tools, parallel_tool_calls=False)
+
+    return {
+        "messages": [llm_with_tools.invoke([sys_msg] + state["messages"])]
+
+    }
