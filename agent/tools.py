@@ -96,8 +96,15 @@ def translate_words(random_words: list, source_language: str, target_language: s
     # Build a mapping from the model output
     model_map = {item.get("source", ""): item.get("target", "") for item in translation_list if isinstance(item,dict)}
 
+    # Create a case-insensitive lookup mapping using casefold()
+    casefold_map = {
+        source.casefold(): target
+        for source, target in model_map.items()
+        if isinstance(source, str)
+    }
+
     ordered_translations = [
-        {"source":w, "target": model_map.get(w, model_map.get(w.capitalize(),w))}
+        {"source": w, "target": model_map.get(w, casefold_map.get(w.casefold(), w))}
         for w in random_words
     ]
 
