@@ -96,7 +96,14 @@ def translate_words(random_words: list, source_language: str, target_language: s
     # Build a mapping from the model output
     model_map = {item.get("source", ""): item.get("target", "") for item in translation_list if isinstance(item,dict)}
 
-    return translation_list
+    ordered_translations = [
+        {"source":w, "target": model_map.get(w, model_map.get(w.capitalize(),w))}
+        for w in random_words
+    ]
+
+    return {
+        "translations": ordered_translations
+    }
 
 
 
