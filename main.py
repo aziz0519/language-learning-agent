@@ -102,7 +102,7 @@ async def main():
     
     messages = [HumanMessage(content=user_prompt)]
     
-    result = await react_graph.invoke({
+    result = await react_graph.ainvoke({
         "messages": messages,
         "source_language": None,
         "number_of_words": None,
