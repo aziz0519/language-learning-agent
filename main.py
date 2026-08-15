@@ -1,6 +1,8 @@
+import asyncio
+
 from typing import TypedDict, Annotated, Optional
 
-from langchain_core.messages import AnyMessage, SystemMessage
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START
 from langgraph.graph.message import add_messages
@@ -80,10 +82,35 @@ async def build_graph():
 
     builder.add_node("assistant", assistant)
     builder.add_node("tools", ToolNode(tools))
-    return None
+    
+    builder.add_edge(START, "assistant")
+    builder.add_conditional_edges(
+        "assistant",
+        tools_condition
+    )
+    
+    builder.add_edge("tools", "assistant")
+    
+    return builder.compile()
 
 
 async def main():
     """Main async function to run the application."""
     react_graph = await build_graph()
-    return None
+    
+    user_prompt = "Please get 10 easy words in Spanish, translate them to English, and create a new Anki deck with them called Spanish::Easy."
+    
+    messages = [HumanMessage(content=user_prompt)]
+    
+    result = await react_graph.ainvoke({
+        "messages": messages,
+        "source_language": None,
+        "number_of_words": None,
+        "target_language": None,
+        "word_difficulty": None
+    })
+    
+    print(f"Final messages: {result['messages'][-1].content}")
+    
+if __name__ == "__main__":
+    asyncio.run(main())
