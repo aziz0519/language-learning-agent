@@ -1,4 +1,6 @@
 import asyncio
+import os
+from pathlib import Path
 
 from typing import TypedDict, Annotated, Optional
 
@@ -25,7 +27,39 @@ class AgentState(TypedDict):
     target_language: Optional[str]
 
 
-CLANKI_JS = "/Users/aziz_/Documents/Projects/clanki/build/index.js"
+def clanki_js_path() -> str:
+    """
+    Resolve the path to the Clanki MCP server entry point.
+    
+    Tries the following in order:
+    1. Environment variable CLANKI_JS_PATH
+    2. Repository-relative path: ../clanki/build/index.js
+    
+    Raises FileNotFoundError if the path cannot be resolved and validated.
+    """
+    # Try environment variable first
+    env_path = os.getenv("CLANKI_JS_PATH")
+    if env_path:
+        path_obj = Path(env_path).expanduser()
+        if path_obj.exists():
+            return str(path_obj.resolve())
+        raise FileNotFoundError(
+            f"CLANKI_JS_PATH environment variable points to non-existent path: {env_path}"
+        )
+    
+    # Try repository-relative path
+    current_dir = Path(__file__).resolve().parent
+    repo_relative = current_dir.parent / "clanki" / "build" / "index.js"
+    if repo_relative.exists():
+        return str(repo_relative)
+    
+    raise FileNotFoundError(
+        f"Could not find Clanki MCP server. "
+        f"Set CLANKI_JS_PATH environment variable or place Clanki at {repo_relative}"
+    )
+
+
+CLANKI_JS = clanki_js_path()
 
 local_tools = [
     get_n_random_words,
