@@ -25,6 +25,7 @@ class AgentState(TypedDict):
     target_language: Optional[str]
 
 
+CLANKI_JS = "/Users/aziz_/Documents/Projects/clanki/build/index.js"
 
 local_tools = [
     get_n_random_words,
@@ -38,7 +39,7 @@ async def setup_tools():
         {
             "clanki": {
                 "command":"node",
-                "args": [],
+                "args": [CLANKI_JS],
                 "transport": "stdio",
             }
         }
