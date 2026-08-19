@@ -59,8 +59,6 @@ def clanki_js_path() -> str:
     )
 
 
-CLANKI_JS = clanki_js_path()
-
 local_tools = [
     get_n_random_words,
     get_n_random_words_by_difficulty_level,
@@ -69,11 +67,12 @@ local_tools = [
 
 
 async def setup_tools():
+    clanki_js = clanki_js_path()
     client = MultiServerMCPClient(
         {
             "clanki": {
                 "command":"node",
-                "args": [CLANKI_JS],
+                "args": [clanki_js],
                 "transport": "stdio",
             }
         }

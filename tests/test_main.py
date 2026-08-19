@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import main
+import src.main as main
 
 
 @pytest.fixture(autouse=True)
